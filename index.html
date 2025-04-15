@@ -74,6 +74,66 @@
         }
         return true;
     }
+    function showError(message) {
+        const errorBox = document.getElementById('errorMessage');
+        errorBox.textContent = message;
+
+        setTimeout(() => {
+            errorBox.textContent = '';
+        }, 3000);
+    }
+
+    function clearErrorMessage() {
+        document.getElementById('errorMessage').textContent = '';
+    }
+
+    function renderList() {
+        const ul = document.getElementById('pairList');
+        ul.textContent = '';
+
+        for (let i = 0; i < pairs.length; i++) {
+            const pair = pairs[i];
+            const li = document.createElement('li');
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+
+            label.textContent = `${pair.name} = ${pair.value}`;
+
+            checkbox.type = 'checkbox';
+            checkbox.setAttribute('data-index', i);
+
+            label.appendChild(checkbox);
+            li.appendChild(label);
+            ul.appendChild(li);
+        }
+    }
+
+    function sortByName() {
+        pairs.sort((a, b) => a.name.localeCompare(b.name));
+        renderList();
+    }
+
+    function sortByValue() {
+        pairs.sort((a, b) => a.value.localeCompare(b.value));
+        renderList();
+    }
+
+    function deleteSelected() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+        const indexes = [];
+
+        checkboxes.forEach(cb => {
+            indexes.push(Number(cb.dataset.index));
+        });
+
+        indexes.sort((a, b) => b - a);
+
+        indexes.forEach(i => {
+            pairs.splice(i, 1);
+        });
+
+        renderList();
+    }
 </script>
 </body>
 </html>
