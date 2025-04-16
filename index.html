@@ -176,7 +176,7 @@
         const equalIndex = value.indexOf('=');
 
         if (equalIndex === -1) {
-            showError("Invalid format. Use: name = value");
+            setTimeout(() => showError("Invalid format. Use: name = value"), 500);
             return;
         }
 
@@ -184,12 +184,12 @@
         const val = value.substring(equalIndex + 1).trim();
 
         if (key === '' || val === '') {
-            showError("Name and value cannot be empty.");
+            setTimeout(() => showError("Name and value cannot be empty."), 500);
             return;
         }
 
         if (!isAlphaNumeric(key) || !isAlphaNumeric(val)) {
-            showError("Only letters and numbers are allowed for name and value.");
+            setTimeout(() => showError("Only letters and numbers are allowed for name and value."), 500);
             return;
         }
 
@@ -260,11 +260,7 @@
         }
 
         const selectedIndexes = Array.from(checkboxes, cb => Number(cb.dataset.index));
-
-        const updatedPairs = pairs.filter((_, index) => !selectedIndexes.includes(index));
-
-        pairs.length = 0;
-        pairs.push(...updatedPairs);
+        selectedIndexes.sort((a, b) => b - a).forEach(i => pairs.splice(i, 1));
 
         renderList();
     }
