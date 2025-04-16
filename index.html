@@ -8,6 +8,141 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Name/Value Pairs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e3f2fd;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #1976d2;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .input-group input {
+            flex: 1 1 60%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+        }
+
+        .input-group button {
+            flex: 1 1 35%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #388e3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .input-group button:hover {
+            background-color: #2e7d32;
+        }
+
+        #errorMessage {
+            color: #d32f2f;
+            margin-bottom: 10px;
+            font-size: 14px;
+            min-height: 18px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #bbdefb;
+            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        li label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        li label span {
+            color: #333;
+            font-size: 16px;
+        }
+
+        li input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .controls button {
+            flex: 1 1 30%;
+            padding: 10px;
+            font-size: 14px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .controls button:nth-child(1),
+        .controls button:nth-child(2) {
+            background-color: #1976d2;
+        }
+
+        .controls button:nth-child(1):hover,
+        .controls button:nth-child(2):hover {
+            background-color: #1565c0;
+        }
+
+        .controls button:nth-child(3) {
+            background-color: #d32f2f;
+        }
+
+        .controls button:nth-child(3):hover {
+            background-color: #c62828;
+        }
+
+        @media (max-width: 500px) {
+            .input-group input,
+            .input-group button,
+            .controls button {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -16,16 +151,16 @@
     <div class="input-group">
         <input id="pairInput" type="text" placeholder="Enter name/value pair in format: name = value"
                oninput="clearErrorMessage()">
-        <button onclick="addPair()">Add</button>
+        <button id="addBtn">Add</button>
     </div>
     <div id="errorMessage"></div>
 
     <ul id="pairList"></ul>
 
     <div class="controls">
-        <button onclick="sortByName()">Sort by Name</button>
-        <button onclick="sortByValue()">Sort by Value</button>
-        <button onclick="deleteSelected()">Delete</button>
+        <button id="sortNameBtn">Sort by Name</button>
+        <button id="sortValueBtn">Sort by Value</button>
+        <button id="deleteBtn">Delete</button>
     </div>
 </div>
 
@@ -64,16 +199,9 @@
     }
 
     function isAlphaNumeric(str) {
-        for (let i = 0; i < str.length; i++) {
-            const code = str.charCodeAt(i);
-            const isLetter = (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
-            const isNumber = (code >= 48 && code <= 57);
-            if (!isLetter && !isNumber) {
-                return false;
-            }
-        }
-        return true;
+        return /^[a-zA-Z0-9]+$/.test(str);
     }
+
     function showError(message) {
         const errorBox = document.getElementById('errorMessage');
         errorBox.textContent = message;
@@ -91,21 +219,22 @@
         const ul = document.getElementById('pairList');
         ul.textContent = '';
 
-        for (let i = 0; i < pairs.length; i++) {
-            const pair = pairs[i];
+        pairs.forEach((pair, i) => {
             const li = document.createElement('li');
             const label = document.createElement('label');
             const checkbox = document.createElement('input');
-
-            label.textContent = `${pair.name} = ${pair.value}`;
+            const textSpan = document.createElement('span');
 
             checkbox.type = 'checkbox';
             checkbox.setAttribute('data-index', i);
 
-            label.appendChild(checkbox);
+            textSpan.textContent = `${pair.name} = ${pair.value}`;
+
+            label.append(checkbox, textSpan);
+
             li.appendChild(label);
             ul.appendChild(li);
-        }
+        });
     }
 
     function sortByName() {
@@ -119,21 +248,37 @@
     }
 
     function deleteSelected() {
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-        const indexes = [];
+        const checkboxes = document.querySelectorAll('#pairList input[type="checkbox"]:checked');
 
-        checkboxes.forEach(cb => {
-            indexes.push(Number(cb.dataset.index));
-        });
+        if (checkboxes.length === 0) {
+            showError("No items selected for deletion.");
+            return;
+        }
 
-        indexes.sort((a, b) => b - a);
+        if (!confirm(`Are you sure you want to delete ${checkboxes.length} item(s)?`)) {
+            return;
+        }
 
-        indexes.forEach(i => {
-            pairs.splice(i, 1);
-        });
+        const selectedIndexes = Array.from(checkboxes, cb => Number(cb.dataset.index));
+
+        const updatedPairs = pairs.filter((_, index) => !selectedIndexes.includes(index));
+
+        pairs.length = 0;
+        pairs.push(...updatedPairs);
 
         renderList();
     }
+
+    document.getElementById('addBtn').addEventListener('click', addPair);
+    document.getElementById('sortNameBtn').addEventListener('click', sortByName);
+    document.getElementById('sortValueBtn').addEventListener('click', sortByValue);
+    document.getElementById('deleteBtn').addEventListener('click', deleteSelected);
+
+    document.getElementById('pairInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            addPair();
+        }
+    });
 </script>
 </body>
 </html>
